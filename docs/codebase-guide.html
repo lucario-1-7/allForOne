@@ -1,0 +1,534 @@
+<title>extractorPie - Codebase Manual</title>
+<style>
+  :root {
+    --paper: #f3f4f7;
+    --card: #ffffff;
+    --ink: #191c22;
+    --ink-soft: #4a5160;
+    --ink-faint: #868d9c;
+    --line: #e0e3ea;
+    --line-soft: #eceef3;
+    --accent: #b6541a;
+    --accent-ink: #9a4413;
+    --accent-soft: #f6ece3;
+    --tip: #1c7d52;
+    --tip-soft: #e2f2ea;
+    --warn: #b23b2c;
+    --warn-soft: #f8e7e3;
+    --note: #2f5fe0;
+    --note-soft: #e9eefc;
+    --code-bg: #1a1e28;
+    --code-ink: #dde3ef;
+    --code-com: #6d768b;
+    --code-key: #e5a06a;
+    --code-str: #9fd3a6;
+    --code-fn: #8fb6f2;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1220px; margin: 0 auto; padding: 0 clamp(1rem, 3vw, 2.5rem);
+    display: grid; grid-template-columns: 1fr; gap: 2.5rem; }
+  @media (min-width: 1040px) {
+    .wrap { grid-template-columns: 16.5rem minmax(0, 1fr); align-items: start; }
+    .tree { position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); overflow-y: auto; }
+  }
+
+  /* file tree sidebar */
+  .tree { padding-top: 2rem; font-family: var(--mono); font-size: 0.78rem; }
+  .tree .kick { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.62rem;
+    color: var(--accent); margin-bottom: 0.8rem; font-family: var(--sans); font-weight: 700; }
+  .tree a { display: block; color: var(--ink-soft); text-decoration: none; padding: 0.16rem 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tree a:hover { color: var(--accent-ink); }
+  .tree .dir { color: var(--ink-faint); margin-top: 0.5rem; font-weight: 600; }
+  .tree .i1 { padding-left: 0.9rem; }
+  .tree .i2 { padding-left: 1.8rem; }
+
+  main { min-width: 0; padding-bottom: 6rem; }
+  header.mast { padding: 2.6rem 0 1.6rem; border-bottom: 2px solid var(--ink); margin-bottom: 2.2rem; }
+  .eyebrow { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.16em;
+    font-size: 0.68rem; color: var(--accent); margin-bottom: 0.9rem; }
+  h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1.06; letter-spacing: -0.02em;
+    margin: 0 0 1rem; font-weight: 760; text-wrap: balance; }
+  .lede { font-size: 1.1rem; color: var(--ink-soft); max-width: 42rem; margin: 0; }
+
+  h2 { font-size: 1.5rem; letter-spacing: -0.015em; margin: 2.8rem 0 0.4rem;
+    padding-top: 0.8rem; border-top: 1px solid var(--line); text-wrap: balance; }
+  h2:first-of-type { border-top: 0; }
+  .h2sub { color: var(--ink-faint); font-size: 0.95rem; margin: 0 0 1.2rem; }
+  h3 { font-size: 1.05rem; margin: 1.8rem 0 0.5rem; }
+
+  /* file section header */
+  .file { font-family: var(--mono); font-size: 1rem; font-weight: 650;
+    background: var(--ink); color: #fff; border-radius: 7px 7px 0 0;
+    padding: 0.55rem 0.9rem; margin: 2rem 0 0; display: flex; justify-content: space-between; align-items: center; }
+  .file .path { color: #fff; }
+  .file .path .dim { color: #9aa2b4; }
+  .file .role { font-family: var(--sans); font-size: 0.66rem; text-transform: uppercase;
+    letter-spacing: 0.1em; background: var(--accent); padding: 0.15rem 0.55rem; border-radius: 4px; font-weight: 700; }
+  .fbody { background: var(--card); border: 1px solid var(--line); border-top: 0;
+    border-radius: 0 0 9px 9px; padding: 1.1rem 1.3rem 1.3rem; margin-bottom: 0.4rem; }
+  .fbody > *:first-child { margin-top: 0; }
+  .fbody h4 { margin: 1.1rem 0 0.35rem; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.09em; color: var(--accent-ink); }
+
+  p { margin: 0 0 0.9rem; }
+  ul, ol { margin: 0 0 0.9rem; padding-left: 1.2rem; }
+  li { margin: 0.3rem 0; }
+  strong { font-weight: 650; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--line-soft);
+    border: 1px solid var(--line); border-radius: 4px; padding: 0.06em 0.34em; color: var(--accent-ink); }
+  pre { background: var(--code-bg); color: var(--code-ink); border-radius: 8px;
+    padding: 1rem 1.15rem; overflow-x: auto; font-family: var(--mono); font-size: 0.78rem;
+    line-height: 1.58; margin: 0.9rem 0 1rem; tab-size: 4; }
+  pre code { all: unset; font-family: var(--mono); white-space: pre; }
+  pre .c { color: var(--code-com); font-style: italic; }
+  pre .k { color: var(--code-key); }
+  pre .s { color: var(--code-str); }
+  pre .f { color: var(--code-fn); }
+
+  .callout { border-radius: 8px; padding: 0.85rem 1.1rem; margin: 1rem 0; font-size: 0.92rem;
+    border: 1px solid var(--line); background: var(--card); }
+  .callout .tag { font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 0.62rem; font-weight: 700; display: block; margin-bottom: 0.4rem; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout.tip { background: var(--tip-soft); border-color: #b6ddc9; } .callout.tip .tag { color: var(--tip); }
+  .callout.warn { background: var(--warn-soft); border-color: #ecc0b9; } .callout.warn .tag { color: var(--warn); }
+  .callout.note { background: var(--note-soft); border-color: #c6d4f7; } .callout.note .tag { color: var(--note); }
+  .callout.key { background: var(--accent-soft); border-color: #e6c7ac; } .callout.key .tag { color: var(--accent); }
+
+  .flow { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1.2rem 1.3rem; margin: 1.3rem 0; font-family: var(--mono); font-size: 0.82rem; line-height: 1.9; overflow-x: auto; }
+  .flow .n { color: var(--accent); font-weight: 700; }
+  .flow .arw { color: var(--ink-faint); }
+
+  .dl { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--mono);
+    font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600;
+    color: var(--paper); background: var(--ink); border: 1px solid var(--ink); border-radius: 8px;
+    padding: 0.55rem 1rem; cursor: pointer; margin-top: 1.6rem; }
+  .dl:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+  .dl svg { width: 14px; height: 14px; }
+
+  table.rebuild { border-collapse: collapse; width: 100%; font-size: 0.86rem; margin: 1rem 0; }
+  table.rebuild th, table.rebuild td { text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.rebuild th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); }
+  table.rebuild td.n { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+  table.rebuild td.file-c { font-family: var(--mono); font-size: 0.8rem; }
+
+  footer { margin-top: 3.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 0.82rem; }
+  a { color: var(--accent-ink); }
+  a:focus-visible, .dl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+</style>
+
+<div class="wrap">
+  <nav class="tree" aria-label="File tree">
+    <div class="kick">extractorPie/</div>
+    <a href="#bigpicture">the big picture</a>
+    <a href="#patterns">core patterns</a>
+    <div class="dir">backend/</div>
+    <a class="i1" href="#requirements">requirements.txt</a>
+    <a class="i1" href="#env">.env.example</a>
+    <div class="dir i1">app/</div>
+    <a class="i2" href="#config">config.py</a>
+    <a class="i2" href="#db">db.py</a>
+    <a class="i2" href="#security">security.py</a>
+    <a class="i2" href="#cache">cache.py</a>
+    <div class="dir i2">adapters/</div>
+    <a class="i2" href="#base" style="padding-left:2.7rem">base.py</a>
+    <a class="i2" href="#adapters" style="padding-left:2.7rem">the 9 sources</a>
+    <a class="i2" href="#feed">feed.py</a>
+    <a class="i2" href="#api">api.py</a>
+    <a class="i2" href="#main">main.py</a>
+    <div class="dir">frontend/</div>
+    <a class="i1" href="#index">index.html</a>
+    <a class="i1" href="#style">style.css</a>
+    <a class="i1" href="#appjs">app.js</a>
+    <a href="#rebuild">rebuild order</a>
+  </nav>
+
+  <main>
+    <header class="mast">
+      <div class="eyebrow">extractorPie / codebase manual</div>
+      <h1>Every file, what it does, and how to rebuild it</h1>
+      <p class="lede">A walk through the whole codebase, back to front. Read the big picture and the three core patterns first; after that, each file's section explains its purpose, how it works, and what you would need to know to write it yourself.</p>
+      <button type="button" class="dl" id="downloadBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Download this manual
+      </button>
+    </header>
+
+    <section id="bigpicture">
+      <h2>The big picture</h2>
+      <p class="h2sub">Understand this and every file has an obvious place.</p>
+
+      <p>extractorPie is two halves that meet at one JSON endpoint. The <strong>backend</strong> (Python, FastAPI) knows who you are, remembers what you follow, and on request goes out to a dozen third-party APIs, cleans up their wildly different responses into one shape, and hands the frontend a single tidy object. The <strong>frontend</strong> (plain HTML, CSS, and one JavaScript file) is a small single-page app that logs you in, walks you through onboarding, and renders that object as a dashboard and tabs.</p>
+
+      <p>There is no framework on the frontend and no ORM magic you cannot see. Every moving part is a file you can read top to bottom. The layering, from the outside in:</p>
+
+      <div class="flow">
+<span class="n">frontend/</span>  <span class="arw">the browser app (auth, onboarding, dashboard)</span>
+   <span class="arw">|</span>  HTTP + a bearer token
+<span class="n">api.py</span>    <span class="arw">routes: /auth, /me, /search, /feed</span>
+   <span class="arw">|</span>
+<span class="n">feed.py</span>   <span class="arw">composes one user's feed from their interests</span>
+   <span class="arw">|</span>  runs many adapters at once
+<span class="n">adapters/</span> <span class="arw">one file per source, each returns normalized items</span>
+   <span class="arw">|</span>  guarded by
+<span class="n">cache.py</span>  <span class="arw">+ per-source failure isolation (base.py)</span>
+
+<span class="n">db.py</span>     <span class="arw">Postgres: users, interests, follows</span>
+<span class="n">security.py</span> <span class="arw">password hashing + signed session tokens</span>
+<span class="n">config.py</span> <span class="arw">reads .env: secret, db url, API keys</span>
+      </div>
+
+      <h3>The request lifecycle (what happens when the dashboard loads)</h3>
+      <ol>
+        <li>The browser has a saved <strong>token</strong>. It calls <code>GET /api/feed</code> with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+        <li><strong>api.py</strong> validates the token (<strong>security.py</strong>), loads that <strong>User</strong> and their <strong>Interest</strong> and <strong>Follow</strong> rows (<strong>db.py</strong>).</li>
+        <li>It calls <code>build_feed(interests, follows)</code> in <strong>feed.py</strong>.</li>
+        <li>feed.py looks at which domains the user enabled and fires the matching <strong>adapters</strong> concurrently. Each adapter call is wrapped by <code>run_adapter</code> (<strong>base.py</strong>), which checks the <strong>cache</strong> first and swallows any error into an "errors" list instead of crashing.</li>
+        <li>Each adapter returns a list of items in the one <strong>normalized shape</strong>. feed.py sorts and buckets them into a per-domain payload (events vs news, sub-tabs for Screen).</li>
+        <li>The JSON comes back; <strong>app.js</strong> renders the dashboard and tabs from it.</li>
+      </ol>
+
+      <p>That is the entire system. The rest of this manual is just each of those boxes in detail.</p>
+    </section>
+
+    <section id="patterns">
+      <h2>Three core patterns</h2>
+      <p class="h2sub">These recur everywhere. Learn them once here.</p>
+
+      <h3>1. The normalized item shape (the contract)</h3>
+      <p>Every source returns data in a different format. Rather than let that mess leak into the frontend, every adapter converts its data into <em>one</em> dictionary shape. The frontend only ever knows about this shape, so adding a new source never changes the frontend.</p>
+      <pre><code>{
+  <span class="s">"source"</span>:   <span class="s">"Hacker News"</span>,   <span class="c"># where it came from (shown as a label)</span>
+  <span class="s">"domain"</span>:   <span class="s">"tech"</span>,          <span class="c"># tech | sports | games | screen</span>
+  <span class="s">"kind"</span>:     <span class="s">"news"</span>,          <span class="c"># "news" (feed item) or "event" (dated, calendar)</span>
+  <span class="s">"title"</span>:    <span class="s">"..."</span>,
+  <span class="s">"subtitle"</span>: <span class="s">"..."</span>,           <span class="c"># secondary line: outlet, score, episode</span>
+  <span class="s">"url"</span>:      <span class="s">"..."</span>,
+  <span class="s">"ts"</span>:       <span class="s">"2026-07-12T14:16:00+00:00"</span>,  <span class="c"># ISO time; events must have one</span>
+  <span class="s">"group"</span>:    <span class="s">"anime"</span>          <span class="c"># sub-bucket: movies/tv/anime, or a league</span>
+}</code></pre>
+      <p>The distinction between <code>kind: "news"</code> and <code>kind: "event"</code> is the whole "streams vs follows" idea in one field. Events have a date and belong on a calendar; news flows and belongs in a feed.</p>
+
+      <h3>2. The adapter pattern</h3>
+      <p>Each source lives in its own file under <code>adapters/</code> and exposes one async function that returns a list of normalized items. They all look the same from the outside, so <strong>feed.py</strong> can treat them interchangeably and you can add a source without touching anything else.</p>
+
+      <h3>3. Cache-first with failure isolation</h3>
+      <p>Every adapter call goes through <code>run_adapter</code> in <strong>base.py</strong>. It does two jobs: return a cached result if one is still fresh (so tight free-tier rate limits are respected), and if the adapter throws, record the message in an <code>errors</code> list and return an empty list instead of letting the exception bubble up. That is why one dead or unconfigured API shows a small error card while the rest of the page renders fine.</p>
+
+      <div class="callout key">
+        <span class="tag">The one sentence to remember</span>
+        <p>Adapters normalize, the cache and <code>run_adapter</code> protect, feed.py composes, api.py exposes, the frontend renders. Every file is one of those five jobs.</p>
+      </div>
+    </section>
+
+    <!-- ===================== BACKEND ===================== -->
+    <h2>Backend files</h2>
+    <p class="h2sub">Python, FastAPI. Everything under <code>backend/</code>.</p>
+
+    <div class="file" id="requirements"><span class="path">backend/<span class="dim"></span>requirements.txt</span><span class="role">deps</span></div>
+    <div class="fbody">
+      <p>The Python dependencies. Nothing exotic:</p>
+      <ul>
+        <li><strong>fastapi</strong> + <strong>uvicorn</strong>: the web framework and the server that runs it.</li>
+        <li><strong>httpx</strong>: an async HTTP client, used by every adapter to call the third-party APIs.</li>
+        <li><strong>sqlalchemy</strong> + <strong>psycopg</strong>: the database toolkit and the Postgres driver.</li>
+        <li><strong>feedparser</strong>: parses RSS feeds (used by the news adapter).</li>
+        <li><strong>python-dotenv</strong>: loads the <code>.env</code> file. <strong>email-validator</strong>: lets FastAPI validate the email field on signup.</li>
+      </ul>
+      <h4>Rebuild note</h4>
+      <p>Install with <code>pip install -r requirements.txt</code>. Password hashing and tokens use only the Python standard library, so there is deliberately no crypto dependency here.</p>
+    </div>
+
+    <div class="file" id="env"><span class="path">backend/<span class="dim"></span>.env.example</span><span class="role">config template</span></div>
+    <div class="fbody">
+      <p>A template for the real <code>.env</code> (which is never committed). You copy it to <code>.env</code> and fill in values. It documents two required settings, <code>SECRET_KEY</code> and <code>DATABASE_URL</code>, and the optional API keys. The comments explain how to get each key and how to create the Postgres database.</p>
+      <h4>Why it matters</h4>
+      <p>Secrets live in <code>.env</code>, never in code. <code>config.py</code> reads them. The app runs with none of the API keys set, keyed modules simply show a "key not configured" card until you add them.</p>
+    </div>
+
+    <div class="file" id="config"><span class="path">backend/app/<span class="dim"></span>config.py</span><span class="role">settings</span></div>
+    <div class="fbody">
+      <p>The single place that reads the environment. It calls <code>load_dotenv(...)</code> to pull in <code>.env</code>, then exposes each value as a module-level constant, with a sensible default where one makes sense.</p>
+      <pre><code><span class="k">from</span> dotenv <span class="k">import</span> load_dotenv
+load_dotenv(Path(__file__).resolve().parent.parent / <span class="s">".env"</span>)
+
+SECRET_KEY   = os.getenv(<span class="s">"SECRET_KEY"</span>, <span class="s">"dev-only-secret-change-me"</span>)
+DATABASE_URL = os.getenv(<span class="s">"DATABASE_URL"</span>, <span class="s">"sqlite:///./extractorpie.db"</span>)
+TMDB_TOKEN   = os.getenv(<span class="s">"TMDB_TOKEN"</span>, <span class="s">""</span>)
+<span class="c"># ... one line per key ...</span>
+TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30   <span class="c"># sessions last 30 days</span>
+HTTP_TIMEOUT = 12.0                      <span class="c"># seconds, for every outbound API call</span></code></pre>
+      <h4>Rebuild note</h4>
+      <p>The pattern is "read once, import everywhere." Any other file that needs a setting does <code>from .config import TMDB_TOKEN</code>. Defaulting <code>DATABASE_URL</code> to SQLite is what lets the app boot with zero setup; you override it with the Postgres URL in <code>.env</code>.</p>
+    </div>
+
+    <div class="file" id="db"><span class="path">backend/app/<span class="dim"></span>db.py</span><span class="role">data layer</span></div>
+    <div class="fbody">
+      <p>Defines the database connection and the three tables using SQLAlchemy's modern typed style. This is the app's memory.</p>
+      <h4>The engine and session</h4>
+      <p><code>engine</code> is the connection pool built from <code>DATABASE_URL</code>. <code>SessionLocal</code> is a factory for short-lived database sessions. <code>get_session()</code> is a FastAPI dependency that yields one session per request and always closes it.</p>
+      <h4>The three models</h4>
+      <ul>
+        <li><strong>User</strong>: <code>id</code>, <code>email</code> (unique), <code>password_hash</code>, <code>created_at</code>. Has relationships to its interests and follows, with <code>cascade="all, delete-orphan"</code> so deleting a user cleans up their rows.</li>
+        <li><strong>Interest</strong>: one row per enabled domain. Columns are <code>user_id</code>, <code>domain</code> (tech/sports/games/screen), and <code>config</code>, a JSON column holding that domain's refinement. The docstring gives the shapes, for example sports stores <code>{"leagues": ["PL", "PD"]}</code>, games stores <code>{"esports": "valorant"}</code>.</li>
+        <li><strong>Follow</strong>: a followed item. <code>kind</code> is <code>"tv"</code> or <code>"anime"</code>, <code>external_id</code> is that source's ID (a TVmaze or AniList id), and <code>title</code> is cached so the UI can show it without a lookup.</li>
+      </ul>
+      <p><code>init_db()</code> calls <code>Base.metadata.create_all(engine)</code>, which creates any missing tables on startup.</p>
+      <div class="callout note">
+        <span class="tag">Design choice</span>
+        <p>Storing each domain's refinement in one flexible <code>config</code> JSON column, rather than a rigid table per domain, is what lets the "streams vs follows" model stay simple. Sports keeps a league list, games keeps an esports flag, tech keeps sub-topics, all in the same column. Followed items (TV, anime) are the exception that gets its own <code>Follow</code> table because there can be many per user.</p>
+      </div>
+      <h4>Rebuild note</h4>
+      <p>The roadmap calls for Alembic migrations in a real build; <code>create_all</code> is the quick-start version that creates tables but does not evolve them. Fine until the schema starts changing.</p>
+    </div>
+
+    <div class="file" id="security"><span class="path">backend/app/<span class="dim"></span>security.py</span><span class="role">auth crypto</span></div>
+    <div class="fbody">
+      <p>Password hashing and session tokens, using only the standard library so there is no crypto dependency to install.</p>
+      <h4>Passwords</h4>
+      <p><code>hash_password</code> generates a random salt and runs <strong>PBKDF2-HMAC-SHA256</strong> with 300,000 iterations, then stores <code>salt$digest</code> as one string. <code>verify_password</code> re-hashes the attempt with the stored salt and compares using <code>hmac.compare_digest</code> (a constant-time comparison that avoids timing leaks). Passwords are never stored or logged in plain text.</p>
+      <h4>Tokens</h4>
+      <p>A session token is <code>userid.expiry.signature</code>. <code>create_token</code> builds <code>userid.expiry</code> and appends an HMAC signature keyed by <code>SECRET_KEY</code>. <code>verify_token</code> recomputes the signature, checks it matches (again constant-time), and checks the expiry is in the future, returning the user id or <code>None</code>.</p>
+      <pre><code><span class="k">def</span> <span class="f">create_token</span>(user_id):
+    expiry  = <span class="f">int</span>(time.time()) + TOKEN_TTL_SECONDS
+    payload = <span class="s">f"{user_id}.{expiry}"</span>
+    <span class="k">return</span> <span class="s">f"{payload}.{_sign(payload)}"</span></code></pre>
+      <div class="callout warn">
+        <span class="tag">Honest limitation</span>
+        <p>These are self-contained stateless tokens: there is no server-side session store, so you cannot revoke a single token before it expires (short of rotating <code>SECRET_KEY</code>, which logs everyone out). That is a fine trade for a personal app. For anything bigger you would move to a library like <code>authlib</code> or short-lived tokens plus refresh.</p>
+      </div>
+      <h4>Rebuild note</h4>
+      <p>The key insight is that a signed token needs no database lookup to validate, the signature proves it was issued by you and the expiry proves it is current. The secret must be long and random and must never ship in code.</p>
+    </div>
+
+    <div class="file" id="cache"><span class="path">backend/app/<span class="dim"></span>cache.py</span><span class="role">ttl cache</span></div>
+    <div class="fbody">
+      <p>A tiny in-memory time-to-live cache: one module-level dict mapping a key to <code>(expiry_time, value)</code>. <code>get</code> returns the value if it has not expired (deleting it if it has), <code>put</code> stores a value with a TTL.</p>
+      <h4>Why it exists</h4>
+      <p>Several free API tiers are strict: AniList allows 30 requests a minute, balldontlie 5, API-Football 100 a day. Without caching, a few page loads would hit the limit and start getting rejected. Caching makes the app call each API only on a cache miss.</p>
+      <h4>Rebuild note</h4>
+      <p>This is deliberately the simplest thing that works: one process, one dict. If the app ever runs as multiple worker processes, this cache would not be shared between them and you would swap it for Redis. The interface (<code>get</code>/<code>put</code>) is small precisely so that swap is easy.</p>
+    </div>
+
+    <div class="file" id="base"><span class="path">backend/app/adapters/<span class="dim"></span>base.py</span><span class="role">adapter contract</span></div>
+    <div class="fbody">
+      <p>The heart of the adapter system. Three things live here.</p>
+      <h4>The item() helper</h4>
+      <p>A small factory that builds the normalized item dict with sensible defaults, so adapters do not repeat the key names. Its docstring is the canonical definition of the normalized shape.</p>
+      <h4>run_adapter()</h4>
+      <p>The wrapper every adapter call goes through. Its logic:</p>
+      <pre><code><span class="k">async def</span> <span class="f">run_adapter</span>(name, ttl, fetch, errors):
+    cached = cache.<span class="f">get</span>(name)
+    <span class="k">if</span> cached <span class="k">is not</span> <span class="k">None</span>:
+        <span class="k">return</span> cached                 <span class="c"># fresh cache: skip the network</span>
+    <span class="k">try</span>:
+        items = <span class="k">await</span> asyncio.<span class="f">wait_for</span>(<span class="f">fetch</span>(), timeout=20)
+        cache.<span class="f">put</span>(name, items, ttl)
+        <span class="k">return</span> items
+    <span class="k">except</span> Exception <span class="k">as</span> exc:      <span class="c"># isolation is the whole point</span>
+        errors[name] = <span class="f">str</span>(exc)
+        <span class="k">return</span> []                     <span class="c"># empty, never an exception</span></code></pre>
+      <p>This single function is why the app is resilient: a broken source becomes an entry in <code>errors</code> and an empty list, so <code>feed.py</code> keeps going and the frontend shows an error card for just that source.</p>
+      <h4>KeyMissing</h4>
+      <p>An exception the keyed adapters raise when their credential is not set. Because <code>run_adapter</code> catches all exceptions, a missing key naturally becomes a friendly error card whose message says exactly where to get the key.</p>
+      <div class="callout tip">
+        <span class="tag">Rebuild insight</span>
+        <p>If you rebuild only one file carefully, make it this one. The contract (<code>item</code>) plus the guard (<code>run_adapter</code>) are what make every other adapter short and every failure graceful.</p>
+      </div>
+    </div>
+
+    <div class="file" id="adapters"><span class="path">backend/app/adapters/<span class="dim"></span>*.py</span><span class="role">the 9 sources</span></div>
+    <div class="fbody">
+      <p>Nine source files, all the same shape: an async function that fetches, then maps each result through <code>item(...)</code>. They differ only in the API they call and how they translate it. Here is what each one does and its one interesting wrinkle. Full auth and rate-limit details for every one are in <code>SOURCES.md</code>.</p>
+
+      <h4>hackernews.py &mdash; tech news, no key</h4>
+      <p>Hacker News returns arrays of story <em>IDs</em>, not stories. So this adapter fetches the top-story IDs, then fans out one request per story concurrently with <code>asyncio.gather</code>, and maps each into a news item. The wrinkle: you always need that second round of requests to turn IDs into titles.</p>
+
+      <h4>rss.py &mdash; generic news, no key</h4>
+      <p>One adapter that serves every news lane, parameterized by a <code>FEEDS</code> table mapping each domain to its feed URLs. It fetches with httpx, then parses with feedparser (which is synchronous, so it runs in a thread via <code>asyncio.to_thread</code>). For the Screen domain, each feed carries a <code>group</code> of movies, tv, or anime, which is how the Screen news sub-tabs get filled. If every feed in a lane fails, it re-raises so the lane shows an error card.</p>
+
+      <h4>tvmaze.py &mdash; TV shows, no key</h4>
+      <p>Two functions: <code>search_shows</code> powers the follow flow during onboarding, and <code>fetch_next_episodes</code> takes the user's followed show IDs and asks TVmaze for each show with its next episode embedded. The wrinkle: a show between seasons has no next episode, so those return <code>None</code> and are filtered out, no fake countdown.</p>
+
+      <h4>anilist.py &mdash; anime, no key</h4>
+      <p>Uses AniList's GraphQL API (one POST endpoint, a query in the body). <code>search_anime</code> for onboarding, <code>fetch_airing</code> for the calendar. The wrinkle: it batches <em>all</em> followed anime into one query using <code>id_in: $ids</code>, which matters because AniList's rate limit is tight. Its <code>nextAiringEpisode</code> field gives an exact air timestamp, which is why it beats Jikan as the anime source.</p>
+
+      <h4>tmdb.py &mdash; upcoming movies, keyed</h4>
+      <p>Calls TMDB's upcoming-movies endpoint with the v4 bearer token. Raises <code>KeyMissing</code> if <code>TMDB_TOKEN</code> is unset. The wrinkle: results are region-sensitive, so it passes a region; movies become calendar events grouped under "movies".</p>
+
+      <h4>football_data.py &mdash; soccer fixtures, keyed</h4>
+      <p>Fetches fixtures for the user's chosen competitions in the next week using the cross-competition <code>/matches</code> endpoint (one call for all leagues, to respect the 10-per-minute limit). It also exports <code>FREE_COMPETITIONS</code>, the league list shown during onboarding.</p>
+
+      <h4>balldontlie.py &mdash; NBA games, keyed</h4>
+      <p>Fetches upcoming NBA games. The wrinkle is an auth quirk: the API key goes in the <code>Authorization</code> header <em>raw</em>, with no <code>Bearer</code> prefix. Free tier reaches games only, which is all this needs.</p>
+
+      <h4>igdb.py &mdash; game releases, keyed via Twitch</h4>
+      <p>The most involved adapter. IGDB authenticates through Twitch: it first exchanges a client id and secret for an access token (cached in a module dict until near expiry), then POSTs a query in IGDB's "Apicalypse" text syntax (not normal query params) to the release-dates endpoint. It dedupes multi-platform releases so a game appears once.</p>
+
+      <h4>vlrgg.py &mdash; Valorant esports, self-hosted</h4>
+      <p>Talks to a self-hosted vlrggapi instance (there is no official vlr.gg API). Raises <code>KeyMissing</code> unless <code>VLRGG_BASE_URL</code> is set. Deliberately best-effort: it is an unofficial scraper, so it is never allowed to be load-bearing. Returns matches with relative times in the subtitle rather than a precise timestamp.</p>
+
+      <div class="callout key">
+        <span class="tag">The rebuild lesson across all nine</span>
+        <p>Every adapter is "call the API, loop the results, return <code>item(...)</code> for each." The differences are entirely in each API's auth and quirks. Once you have written two of them, the rest are variations. Start with <code>hackernews.py</code> and <code>rss.py</code> because they need no keys.</p>
+      </div>
+    </div>
+
+    <div class="file" id="feed"><span class="path">backend/app/<span class="dim"></span>feed.py</span><span class="role">orchestrator</span></div>
+    <div class="fbody">
+      <p>The composer, and the most important file to understand. It turns a user's interests and follows into the exact payload the frontend renders. Read this one closely; it is where all the decisions live.</p>
+      <h4>What it holds</h4>
+      <ul>
+        <li><code>TTL</code>: a dict of cache lifetimes per source, tuned to each API's cadence and rate limit (tech every 15 minutes, AniList every hour because its limit is tight).</li>
+        <li><code>SOURCE_DOMAIN</code>: maps each source name to the domain whose error area its failures belong in.</li>
+        <li><code>build_feed(interests, follows)</code>: the async function that does the work.</li>
+      </ul>
+      <h4>How build_feed works</h4>
+      <ol>
+        <li>Turn the interest rows into a <code>domains</code> dict and split follows into TV and anime lists.</li>
+        <li>Open an <code>asyncio.TaskGroup</code> and, for each enabled domain, create tasks for its adapters. Every task is wrapped in <code>run_adapter</code>, so all of them run <em>concurrently</em> and none can crash the group. Keyed follow-based calls (TVmaze, AniList) use a cache key that includes the followed IDs, so the cache invalidates when you follow something new.</li>
+        <li>After the group finishes, pull each task's result and assemble the payload: for each domain, an <code>events</code> list (sorted by date) and a <code>news</code> list (sorted newest first). Screen is special, its news is split into <code>movies</code>, <code>tv</code>, and <code>anime</code> sub-lists, and tech deliberately has no events (it is calendar-poor by design).</li>
+        <li>Finally, turn the collected <code>errors</code> into a list of <code>{source, domain, message}</code> so the frontend can place each error card in the right tab.</li>
+      </ol>
+      <pre><code><span class="k">async with</span> asyncio.<span class="f">TaskGroup</span>() <span class="k">as</span> tg:
+    <span class="k">if</span> <span class="s">"tech"</span> <span class="k">in</span> domains:
+        tasks[<span class="s">"hn"</span>]       = tg.<span class="f">create_task</span>(<span class="f">gather_into</span>(<span class="s">"hackernews"</span>, ...))
+        tasks[<span class="s">"rss_tech"</span>] = tg.<span class="f">create_task</span>(<span class="f">gather_into</span>(<span class="s">"rss:tech"</span>, ...))
+    <span class="k">if</span> <span class="s">"screen"</span> <span class="k">in</span> domains:
+        tasks[<span class="s">"tmdb"</span>] = tg.<span class="f">create_task</span>(...)   <span class="c"># upcoming movies</span>
+        <span class="k">if</span> tv_follows:   tasks[<span class="s">"tvmaze"</span>]  = tg.<span class="f">create_task</span>(...)
+        <span class="k">if</span> anime_follows: tasks[<span class="s">"anilist"</span>] = tg.<span class="f">create_task</span>(...)
+    <span class="c"># ... games, sports ...</span></code></pre>
+      <div class="callout note">
+        <span class="tag">The two shaping rules encoded here</span>
+        <p>Screen's news is a dict of three sub-lists (the Movies/TV/Anime sub-tabs), and Tech gets no events list at all. Those two lines are the entire information-architecture decision from the roadmap, expressed in code.</p>
+      </div>
+      <h4>Rebuild note</h4>
+      <p>The shape to internalize: gather concurrently, isolate each call, then bucket into <code>domains[x] = {events, news}</code>. If you rebuild this, write it for one domain (tech) first, confirm the payload, then add the others one at a time.</p>
+    </div>
+
+    <div class="file" id="api"><span class="path">backend/app/<span class="dim"></span>api.py</span><span class="role">http routes</span></div>
+    <div class="fbody">
+      <p>Every HTTP endpoint, grouped by concern. FastAPI turns each decorated function into a route and validates request bodies against the Pydantic models.</p>
+      <h4>Auth</h4>
+      <p><code>POST /auth/register</code> and <code>POST /auth/login</code> take a <code>Credentials</code> model (email + password, with length validation). Register hashes the password and creates the user; login verifies it. Both return a token and whether the user has finished onboarding. <code>current_user</code> is a dependency that reads the <code>Authorization</code> header, verifies the token, and loads the user, raising 401 if anything is off. Any route that needs a logged-in user just adds <code>user = Depends(current_user)</code>.</p>
+      <h4>Profile and interests</h4>
+      <p><code>GET /me</code> returns the user's domains, follows, and the available leagues (for onboarding). <code>PUT /me/interests</code> replaces the user's interest rows from the posted domain-to-config map, validating that domains are known.</p>
+      <h4>Follows and search</h4>
+      <p><code>GET /search?kind=tv|anime&amp;q=...</code> proxies to the TVmaze or AniList search adapter. <code>POST /me/follows</code> and <code>DELETE /me/follows/{id}</code> add and remove followed shows, with an ownership check on delete.</p>
+      <h4>Feed</h4>
+      <p><code>GET /feed</code> is a one-liner: it calls <code>build_feed(user.interests, user.follows)</code> and returns the result. All the work is in feed.py; the route just wires the current user to it.</p>
+      <h4>Rebuild note</h4>
+      <p>The pattern throughout is "validate input with a Pydantic model, get the user from the token dependency, touch the database, return JSON." FastAPI handles the validation and error responses; you write the intent.</p>
+    </div>
+
+    <div class="file" id="main"><span class="path">backend/app/<span class="dim"></span>main.py</span><span class="role">entry point</span></div>
+    <div class="fbody">
+      <p>The application entry point that ties everything together. It creates the FastAPI app, adds CORS middleware (so the browser can call the API), includes the router from <code>api.py</code>, calls <code>init_db()</code> on startup, and mounts the <code>frontend/</code> folder as static files so the backend serves the UI directly at <code>/</code>.</p>
+      <pre><code>app = <span class="f">FastAPI</span>(title=<span class="s">"extractorPie"</span>)
+app.<span class="f">add_middleware</span>(CORSMiddleware, allow_origins=[<span class="s">"*"</span>], ...)  <span class="c"># dev; tighten later</span>
+app.<span class="f">include_router</span>(router)
+
+<span class="k">@app.on_event</span>(<span class="s">"startup"</span>)
+<span class="k">def</span> <span class="f">startup</span>(): <span class="f">init_db</span>()
+
+app.<span class="f">mount</span>(<span class="s">"/"</span>, <span class="f">StaticFiles</span>(directory=frontend_dir, html=<span class="k">True</span>))</code></pre>
+      <h4>Rebuild note</h4>
+      <p>Serving the frontend from the backend means one server and no CORS issues in production. In development the CORS wildcard lets a separate frontend dev server talk to it too. You run the whole thing with <code>uvicorn app.main:app</code>.</p>
+    </div>
+
+    <!-- ===================== FRONTEND ===================== -->
+    <h2>Frontend files</h2>
+    <p class="h2sub">No framework. Three files under <code>frontend/</code>.</p>
+
+    <div class="file" id="index"><span class="path">frontend/<span class="dim"></span>index.html</span><span class="role">shell</span></div>
+    <div class="fbody">
+      <p>A near-empty HTML shell: a <code>&lt;div id="app"&gt;</code> with a loading message, the stylesheet, and <code>app.js</code>. Everything visible is drawn by JavaScript into that div. There is no server-side templating; the page is a blank canvas that <code>app.js</code> fills.</p>
+      <h4>Rebuild note</h4>
+      <p>This is the "single-page app" starting point: one root element, one script. The HTML barely changes after this.</p>
+    </div>
+
+    <div class="file" id="style"><span class="path">frontend/<span class="dim"></span>style.css</span><span class="role">styling</span></div>
+    <div class="fbody">
+      <p>All the styling, organized by the views it supports: CSS variables for the palette at the top, then the auth/onboarding cards, then the main app shell (sticky header, tabs), then the content pieces (agenda rows, news items, error cards, sub-tabs), then a mobile block at the bottom.</p>
+      <h4>Worth knowing</h4>
+      <p>The mobile media query is what fixes the header on small screens: it lets the header wrap and forces the tab nav onto its own full-width row (found and fixed during testing, the tabs were getting squeezed to nothing otherwise). Colors are all CSS variables, so re-theming is a matter of changing the <code>:root</code> block.</p>
+    </div>
+
+    <div class="file" id="appjs"><span class="path">frontend/<span class="dim"></span>app.js</span><span class="role">the whole UI</span></div>
+    <div class="fbody">
+      <p>The entire frontend behavior in one file: state, API calls, and the render functions for each view. It is long but flat, no framework, just functions that build HTML strings and wire up click handlers.</p>
+      <h4>State</h4>
+      <p>A single <code>state</code> object holds everything: the auth token (also mirrored to <code>localStorage</code> so you stay logged in), the loaded profile (<code>me</code>), the fetched <code>feed</code>, which tab and sub-tab are active, and scratch data for onboarding. There is no reactive framework, when state changes, the relevant render function is called again to redraw.</p>
+      <h4>The api helper</h4>
+      <p><code>call(path, options)</code> is the one function that talks to the backend. It attaches the bearer token, parses JSON, throws on errors (surfacing the backend's message), and signs you out automatically on a 401.</p>
+      <h4>The views (each a render function)</h4>
+      <ul>
+        <li><strong>renderAuth</strong>: the sign-in / create-account card, toggling between the two modes.</li>
+        <li><strong>renderOnboarding</strong>: the domain picker plus per-domain refinement, league chips for sports, the Valorant toggle for games, sub-topic chips for tech, and the search-and-follow flow for TV and anime. This is where the "different domains ask different questions" idea becomes UI.</li>
+        <li><strong>renderMain</strong>: the app shell, the header with the tab nav, and it delegates the content to either the dashboard or a domain renderer.</li>
+        <li><strong>renderDashboard</strong>: the unified agenda (all events across domains, sorted) plus the top two headlines per domain. It is explicitly a <em>subset</em> of the tabs, never its own data.</li>
+        <li><strong>renderDomain</strong>: one tab's content, the calendar zone (skipped for tech) and the news feed. For Screen it renders the Movies/TV/Anime sub-tabs.</li>
+      </ul>
+      <h4>Helpers and boot</h4>
+      <p>Small helpers format dates (<code>dayLabel</code>, <code>timeLabel</code>, <code>agoLabel</code>) and escape text to prevent HTML injection (<code>esc</code>). At the bottom, <code>boot()</code> runs on load: if there is a saved token it loads the profile and either shows the dashboard or onboarding; otherwise it shows the auth screen.</p>
+      <div class="callout tip">
+        <span class="tag">Rebuild insight</span>
+        <p>The mental model is: <em>state in one object, one render function per screen, re-render on change.</em> This is what frameworks like React automate; doing it by hand once makes clear what they are actually doing. If you rebuild the frontend, start with <code>renderAuth</code>, then <code>renderDashboard</code> against a fake feed object, and add the rest once data flows.</p>
+      </div>
+    </div>
+
+    <!-- ===================== REBUILD ===================== -->
+    <section id="rebuild">
+      <h2>How to rebuild it yourself</h2>
+      <p class="h2sub">The order that keeps you running at every step.</p>
+      <p>Do not build in file order; build in dependency order, so you have something working from the very first stage. Each row leaves you with a running app.</p>
+      <table class="rebuild">
+        <thead><tr><th>Step</th><th>Files</th><th>You can now...</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="file-c">config.py, db.py, security.py</td><td>Store a user and issue a valid token (no routes yet, test in a REPL).</td></tr>
+          <tr><td class="n">2</td><td class="file-c">api.py (auth only), main.py</td><td>Register and log in over HTTP. Server boots and serves.</td></tr>
+          <tr><td class="n">3</td><td class="file-c">adapters/base.py, cache.py, adapters/hackernews.py</td><td>Fetch one real source into normalized items, cached and failure-isolated.</td></tr>
+          <tr><td class="n">4</td><td class="file-c">feed.py (tech only), api.py (/feed)</td><td>Return a composed feed for one domain over HTTP.</td></tr>
+          <tr><td class="n">5</td><td class="file-c">frontend/ (index, style, app.js)</td><td>See it in a browser: log in, view a tech feed.</td></tr>
+          <tr><td class="n">6</td><td class="file-c">interests + follows in api.py, onboarding in app.js</td><td>Pick domains and follow shows; feed reflects choices.</td></tr>
+          <tr><td class="n">7</td><td class="file-c">remaining adapters + feed.py branches</td><td>Add sources one at a time, each behind its cache and error card.</td></tr>
+          <tr><td class="n">8</td><td class="file-c">dashboard + tabs + sub-tabs in app.js</td><td>The full information architecture.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout key">
+        <span class="tag">The single most important idea</span>
+        <p>The normalized item shape plus <code>run_adapter</code> are the spine. Every source bends to that shape, every failure is caught there, and <code>feed.py</code> only ever works with clean, uniform data. Get those right and the rest is straightforward wiring.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>extractorPie codebase manual. Pair it with <code>ROADMAP.md</code> (the versioned plan) and <code>SOURCES.md</code> (every API's auth, keys, and limits). The best way to truly own this code is to rebuild it in the order above, checking each step runs before moving on.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById("downloadBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+      var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "extractorpie-codebase-guide.html";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  })();
+</script>
