@@ -197,6 +197,25 @@ main.content { max-width: 1100px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
 
 .empty { color: var(--ink-faint); font-size: 0.85rem; padding: 0.6rem 0.2rem; }
 
+/* live scores (Sports tab) */
+.live-title { display: flex; align-items: center; gap: 0.45rem; }
+.live-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--danger);
+  animation: livepulse 1.6s infinite;
+}
+@keyframes livepulse {
+  0% { box-shadow: 0 0 0 0 rgba(197, 48, 48, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(197, 48, 48, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(197, 48, 48, 0); }
+}
+.live-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem; }
+.live-match {
+  border: 1px solid var(--line); border-left: 3px solid var(--danger);
+  background: var(--card); border-radius: 8px; padding: 0.45rem 0.7rem; min-width: 140px;
+}
+.live-match .live-score { display: block; font-weight: 700; font-size: 0.95rem; }
+.live-match .live-sub { display: block; font-size: 0.72rem; color: var(--ink-faint); margin-top: 0.15rem; }
+
 @media (max-width: 560px) {
   .domain-grid { grid-template-columns: 1fr; }
   .event .esub { display: none; }

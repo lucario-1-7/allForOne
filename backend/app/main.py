@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from .api import router
 from .db import init_db
 
-app = FastAPI(title="extractorPie")
+app = FastAPI(title="AllForOne")
 
 app.add_middleware(
     CORSMiddleware,

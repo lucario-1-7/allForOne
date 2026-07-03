@@ -20,3 +20,6 @@ env/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local-only reference docs (not published)
+docs/

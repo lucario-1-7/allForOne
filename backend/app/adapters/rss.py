@@ -44,7 +44,7 @@ async def fetch_domain(domain: str) -> list[Item]:
     feeds = FEEDS.get(domain, [])
     items: list[Item] = []
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT, follow_redirects=True,
-                                 headers={"User-Agent": "extractorPie/0.1 (personal dashboard)"}) as client:
+                                 headers={"User-Agent": "AllForOne/0.1 (personal dashboard)"}) as client:
 
         async def one(feed: dict):
             resp = await client.get(feed["url"])

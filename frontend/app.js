@@ -1,4 +1,4 @@
-/* extractorPie frontend: vanilla JS single page app.
+/* AllForOne frontend: vanilla JS single page app.
    Views: auth -> onboarding -> main (dashboard + domain tabs).
    The dashboard is always a subset of what the tabs hold: one unified agenda
    plus the top two headlines per domain. Full feeds live in the tabs. */
@@ -15,6 +15,7 @@ const state = {
   // onboarding scratch
   obDomains: {},     // domain -> config
   searchResults: { tv: [], anime: [] },
+  liveTimer: null,   // interval id for live-score polling (Sports tab only)
 };
 
 const app = document.getElementById("app");
@@ -43,6 +44,7 @@ async function call(path, options = {}) {
 }
 
 function signOut() {
+  stopLive();
   state.token = "";
   localStorage.removeItem("xp_token");
   state.me = null;
@@ -89,7 +91,7 @@ function renderAuth() {
   const login = state.authMode === "login";
   app.innerHTML = `
     <div class="center-card">
-      <h1>extractorPie</h1>
+      <h1>AllForOne</h1>
       <p class="sub">Everything you follow, in one place.</p>
       <div class="field"><label>Email</label><input id="email" type="email" autocomplete="email"></div>
       <div class="field"><label>Password${login ? "" : " (at least 8 characters)"}</label>
@@ -339,7 +341,7 @@ function renderMain() {
   const tabs = ["dashboard", ...picked];
   app.innerHTML = `
     <header class="top">
-      <span class="brand">extractorPie</span>
+      <span class="brand">AllForOne</span>
       <nav class="tabs">${tabs.map(t => `
         <button class="${state.tab === t ? "on" : ""}" data-tab="${t}">
           ${t === "dashboard" ? "Dashboard" : DOMAIN_META[t].name}
@@ -359,6 +361,43 @@ function renderMain() {
   const content = document.getElementById("content");
   content.innerHTML = state.tab === "dashboard" ? renderDashboard() : renderDomain(state.tab);
   wireSubtabs();
+
+  // Live scores poll only while the Sports tab is open (client-driven, self-limiting).
+  stopLive();
+  if (state.tab === "sports") startLive();
+}
+
+/* ---------- live scores ---------- */
+
+function stopLive() {
+  if (state.liveTimer) { clearInterval(state.liveTimer); state.liveTimer = null; }
+}
+
+async function startLive() {
+  await refreshLive();
+  state.liveTimer = setInterval(refreshLive, 45000);
+}
+
+async function refreshLive() {
+  const strip = document.getElementById("live-strip");
+  if (!strip) { stopLive(); return; }  // navigated away
+  try {
+    const data = await call("/live");
+    renderLiveStrip(strip, data.matches || []);
+  } catch { /* best-effort: never let a live hiccup disrupt the page */ }
+}
+
+function renderLiveStrip(strip, matches) {
+  if (!matches.length) { strip.innerHTML = ""; return; }
+  strip.innerHTML =
+    `<div class="section-title live-title"><span class="live-dot"></span>Live now</div>
+     <div class="live-strip">` +
+    matches.map(m => `
+      <div class="live-match">
+        <span class="live-score">${esc(m.title)}</span>
+        <span class="live-sub">${esc(m.subtitle)}</span>
+      </div>`).join("") +
+    `</div>`;
 }
 
 function errorCards(domain) {
@@ -435,6 +474,9 @@ function renderDomain(domain) {
   if (!data) return `<div class="empty">Not enabled.</div>`;
 
   let html = errorCards(domain);
+
+  // Live scores strip (football only); filled and refreshed by the poller.
+  if (domain === "sports") html += `<div id="live-strip"></div>`;
 
   // Calendar zone: only for domains rich in dated events (IA rule: tech gets none)
   if (domain !== "tech") {

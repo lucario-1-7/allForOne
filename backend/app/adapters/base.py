@@ -42,12 +42,12 @@ async def run_adapter(name: str, ttl: float, fetch: Callable[[], Awaitable[list[
     On error the adapter contributes an entry to `errors` and an empty list,
     never an exception, so the rest of the page still renders.
     """
-    cached = cache.get(name)
+    cached = await cache.get(name)
     if cached is not None:
         return cached
     try:
         items = await asyncio.wait_for(fetch(), timeout=20)
-        cache.put(name, items, ttl)
+        await cache.put(name, items, ttl)
         return items
     except Exception as exc:  # noqa: BLE001 - isolation is the point
         log.warning("adapter %s failed: %s", name, exc)

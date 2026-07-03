@@ -23,6 +23,7 @@ TTL = {
     "f1": 12 * 3600,           # schedule changes rarely
     "cricket": 1 * 3600,       # 100/day limit
     "tennis": 1 * 3600,        # 100/day limit, beta
+    "football_live": 30,       # live scores: short TTL, polled only during matches
 }
 
 # Which adapter failures belong to which domain (for placing error cards).
@@ -133,3 +134,23 @@ async def build_feed(interests: list[Interest], follows: list[Follow]) -> dict:
             "message": message,
         })
     return payload
+
+
+async def build_live(interests: list[Interest]) -> dict:
+    """Live football scores for the user's soccer competitions. Football is the
+    only source that gives (delayed) live scores on a free tier; the frontend
+    polls this on a short interval only while the Sports tab is open."""
+    domains = {i.domain: (i.config or {}) for i in interests}
+    cfg = domains.get("sports", {})
+    soccer = [code for code in cfg.get("leagues", []) if code != "NBA"]
+
+    errors: dict[str, str] = {}
+    matches: list[Item] = []
+    if soccer:
+        key = "football_live:" + ",".join(sorted(soccer))
+        matches = await run_adapter(key, TTL["football_live"],
+                                    lambda: football_data.fetch_live(soccer), errors)
+    return {
+        "matches": matches,
+        "errors": [{"source": s, "message": m} for s, m in errors.items()],
+    }

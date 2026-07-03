@@ -131,3 +131,10 @@ def remove_follow(follow_id: int, user: User = Depends(current_user),
 @router.get("/feed")
 async def get_feed(user: User = Depends(current_user)):
     return await feed_service.build_feed(user.interests, user.follows)
+
+
+@router.get("/live")
+async def get_live(user: User = Depends(current_user)):
+    """Live football scores for the user's leagues. Polled on a short interval
+    by the Sports tab; returns {matches, errors}. Empty if no soccer leagues."""
+    return await feed_service.build_live(user.interests)
