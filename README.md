@@ -4,6 +4,9 @@ A personal dashboard that pulls everything you follow (tech, sports, games, movi
 anime, esports) into one place. FastAPI backend, vanilla JS frontend, Postgres storage.
 **Live on Render, backed by Neon Postgres.**
 
+
+**https://allforone-m0gb.onrender.com**
+
 ## Run it locally
 
 ```
